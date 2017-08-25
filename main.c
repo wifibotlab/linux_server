@@ -8,11 +8,13 @@
 #include "key_non_block.h"
 #include "modbus_wifibot.h"
 #include "tcp_server.h"
+#include "scratch_server.h"
 
 struct shared_t shared;
 void * thread_rs232_read(void *p_data);
 void * thread_wifibot_read_stream(void *p_data);
 void * thread_tcp_socket(void *p_data);
+void * thread_scratch(void *p_data);
 
 void wifibot_process(struct wifibot_cmd_t *wifibot);
 
@@ -22,6 +24,7 @@ int main() {
     pthread_t rs232_read;
     pthread_t wifibot_read_wtream;
     pthread_t tcp_socket;
+    pthread_t scratch;
 
     // var
     struct wifibot_cmd_t wifibot_cmd;
@@ -31,6 +34,7 @@ int main() {
     unsigned char key;
 
     shared.wifibot_read = &wifibot_read;
+    shared.wifibot_cmd  = &wifibot_cmd;
 
     // INIT BUFFER ##############################
     printf("Buff in  ");
@@ -97,6 +101,18 @@ int main() {
     // THREAD TCP SOCKET ########################
     printf("Init thread : tcp_socket ");
     if ( pthread_create(&tcp_socket, NULL, thread_tcp_socket, (void *)&shared) ) {
+        printf(COLOR_RED "[ERROR]\n" COLOR_RESET);
+        return -1;
+    }
+    else
+    {
+        printf(COLOR_GREEN "[OK]\n" COLOR_RESET);
+    }
+    // ##########################################
+ 
+    // THREAD SCRATCH ###########################
+    printf("Init thread : scratch ");
+    if ( pthread_create(&scratch, NULL, thread_scratch, (void *)&shared) ) {
         printf(COLOR_RED "[ERROR]\n" COLOR_RESET);
         return -1;
     }
@@ -193,6 +209,17 @@ void * thread_tcp_socket(void *p_data) {
     shared = (struct shared_t *) p_data;
     
     tcp_server(shared);
+
+}
+
+void * thread_scratch(void *p_data) {
+	
+    printf("Thread scratch" COLOR_GREEN " [OK]\n" COLOR_RESET );
+
+    struct shared_t *shared;
+    shared = (struct shared_t *) p_data;
+    
+    scratch_server(shared);
 
 }
 
